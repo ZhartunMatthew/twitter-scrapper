@@ -19,7 +19,7 @@ class TweetSearchEngine:
         pass
 
     @staticmethod
-    def getTweets(criteria, show_id, proxy=None):
+    def getTweets(criteria):
         """
         Using for parse json response
         :param criteria: Search criteria
@@ -27,20 +27,25 @@ class TweetSearchEngine:
         :param proxy:
         :return: Searched tweets array
         """
-        refreshCursor = ''
+        refreshCursor = None
 
         results = []
         cookieJar = cookielib.CookieJar()
 
         active = True
 
+        # TODO: process many tweets
         while active:
-            json = TweetSearchEngine.getJsonReponse(criteria, refreshCursor, cookieJar, proxy)
+            json = TweetSearchEngine.getJsonReponse(criteria, refreshCursor, cookieJar)
             if len(json['items_html'].strip()) == 0:
                 break
 
             refreshCursor = json['min_position']
+            print(refreshCursor)
+            # TODO: parse request
             tweets = PyQuery(json['items_html'])('div.js-stream-tweet')
+
+            exit(0)
 
             if len(tweets) == 0:
                 break
@@ -59,7 +64,7 @@ class TweetSearchEngine:
                     continue
 
                 tweet.user_id = user_id
-                tweet.show_id = show_id
+                # tweet.show_id = show_id
                 tweet.timestamp = tweet_timestamp
                 tweet.show_rating = TweetUtil.extract_rating(txt)
 
@@ -86,7 +91,7 @@ class TweetSearchEngine:
         return results
 
     @staticmethod
-    def getJsonReponse(criteria, refreshCursor, cookieJar, proxy):
+    def getJsonReponse(criteria, refresh_cursor, cookieJar):
         """
         Using for send request to twitter search
         :param criteria: Search criteria
@@ -95,23 +100,30 @@ class TweetSearchEngine:
         :param proxy:
         :return: json response with tweets
         """
-        url = "https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&max_position=%s"
 
-        urlGetData = ''
+        logging.info(criteria)
 
-        if hasattr(criteria, 'username'):
-            urlGetData += ' from:' + criteria.username
+        prefix = 'https://twitter.com/i/search/timeline?'
+        payload = "f=tweets&src=typd&l=[lang]&q=since:[since-date] until:[until-date]&max_position=[max-position]"
 
-        if hasattr(criteria, 'querySearch'):
-            urlGetData += ' ' + criteria.querySearch
+        if criteria.lang:
+            payload = payload.replace('[lang]', criteria.lang)
 
-        if hasattr(criteria, 'since'):
-            urlGetData += ' since:' + criteria.since
+        if criteria.since:
+            payload = payload.replace('[since-date]', criteria.since)
 
-        if hasattr(criteria, 'until'):
-            urlGetData += ' until:' + criteria.until
+        if criteria.until:
+            payload = payload.replace('[until-date]', criteria.until)
 
-        url = url % (ur.quote(urlGetData), refreshCursor)
+        if refresh_cursor:
+            payload = payload.replace( criteria.max_position)
+        else:
+            payload = payload.replace('[max-position]', "''")
+
+        payload = payload.replace(' ', '%20').replace(':', '%3A')
+
+        url = prefix + payload
+        logging.info('Sending request to: %s' % url)
 
         headers = [
             ('Host', "twitter.com"),
@@ -123,21 +135,15 @@ class TweetSearchEngine:
             ('Connection', "keep-alive")
         ]
 
-        if proxy:
-            opener = ur.build_opener(ur.ProxyHandler({'http': proxy, 'https': proxy}),
-                                     ur.HTTPCookieProcessor(cookieJar))
-        else:
-            opener = ur.build_opener(ur.HTTPCookieProcessor(cookieJar))
+        opener = ur.build_opener(ur.HTTPCookieProcessor(cookieJar))
         opener.addheaders = headers
 
         try:
             response = opener.open(url)
             jsonResponse = response.read()
-        except:
+        except Exception:
             logging.info("Twitter weird response. "
-                         "Try to see on browser: https://twitter.com/search?q=%s&src=typd" % ur.quote(urlGetData))
+                         "Try to see on browser: %s" % url)
             sys.exit()
 
-        dataJson = json.loads(jsonResponse)
-
-        return dataJson
+        return json.loads(jsonResponse)

@@ -8,14 +8,15 @@ class SearchCriteria:
     maxTweet - max count of tweet on response
     """
     def __init__(self):
-        self.query = None
+        self.lang = None
         self.count = None
         self.since = None
         self.until = None
         self.result_type = None
+        self.max_position = None
 
-    def set_query(self, query):
-        self.query = query
+    def set_lang(self, lang):
+        self.lang = lang
         return self
 
     def set_count(self, count):
@@ -33,3 +34,17 @@ class SearchCriteria:
     def set_until(self, until):
         self.until = until
         return self
+
+    def set_max_position(self, max_position):
+        self.max_position = max_position
+        return self
+
+    def __str__(self):
+        return '[SearchCriteria]\n' \
+               'Lang:         %s\n' \
+               'Count:        %s\n' \
+               'Since:        %s\n' \
+               'Until:        %s\n' \
+               'Result type:  %s\n' \
+               'Max position: %s\n' \
+               % (self.lang, self.count, self.since, self.until, self.result_type, self.max_position)
