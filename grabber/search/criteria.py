@@ -24,7 +24,6 @@ class SearchCriteria:
         self.since = since
         return self
 
-
     def set_max_position(self, max_position):
         self.max_position = max_position
         return self

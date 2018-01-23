@@ -4,6 +4,7 @@ import json
 import time
 
 import grabber.search.tweet_util as tweet_util
+import grabber.exporter.exporter as exporter
 from grabber.models.tweet import Tweet
 from .config.config import Config
 
@@ -17,7 +18,7 @@ class TweetSearchEngine:
 
         active = True
         while active:
-            time.sleep(20)
+            time.sleep(5)
             json_response = TweetSearchEngine.get_tweets_set(criteria)
 
             if json_response.get('errors') is not None:
@@ -26,7 +27,8 @@ class TweetSearchEngine:
                 break
 
             tweets = json_response['statuses']
-            logging.info('Found tweets: %d' % len(tweets))
+            logging.info('Tweets in response: %d' % len(tweets))
+            logging.info('Found replies:      %5d / %5d' % (len(results), criteria.count))
             if len(tweets) == 0:
                 logging.warning('No more tweets')
                 break
@@ -37,15 +39,21 @@ class TweetSearchEngine:
                     tweet.id = tweet_item['id_str']
                     tweet.author = tweet_item['user']['id_str']
                     tweet.text = tweet_item['text']
-                    tweet.reply_to = tweet_item['in_reply_to_status_id_str']
+                    tweet.reply_to = \
+                        'https://twitter.com/' + \
+                        tweet_item['in_reply_to_screen_name'] + "/status/" + \
+                        tweet_item['in_reply_to_status_id_str']
+
                     tweet.time = tweet_item['created_at']
-                    logging.info('Found: %d' % len(results))
                     if tweet.id not in unique_ids:
                         unique_ids.add(tweet.id)
                         results.append(tweet)
 
                 if criteria.count <= len(results):
                     break
+
+                if len(results) > 0 and len(results) % 500 == 0:
+                    exporter.create_dump(results)
 
             if criteria.count <= len(results):
                 break
@@ -54,7 +62,6 @@ class TweetSearchEngine:
 
     @staticmethod
     def get_tweets_set(criteria):
-        logging.info(criteria)
         # prefix = 'https://twitter.com/i/search/timeline?'
         # payload = "lang=ru&l=[lang]&q=since:[since-date] until:[until-date]&max_position=[max-position]"
         prefix = 'https://api.twitter.com/1.1/search/tweets.json?'

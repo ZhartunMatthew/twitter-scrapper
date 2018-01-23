@@ -1,5 +1,5 @@
-# TV-show grabber
-Grab info about shows from twitter without any authentication data. That allows to avoid Twitter API limits. 
+# Dialogs grabber
+ 
 
 ### First run
 Will be ASAP

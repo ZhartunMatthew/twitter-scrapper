@@ -5,10 +5,9 @@ import os
 
 from grabber.search.search_engine import TweetSearchEngine
 from grabber.search.criteria import SearchCriteria
-from grabber.exporter.exporter import Exporter
 
 
-def start_search(lang='ru', count=20, result_type='recent', since='2017-01-01'):
+def start_search(lang='ru', count=10000, result_type='recent', since='2017-01-01'):
     criteria = SearchCriteria()
     criteria = criteria \
         .set_lang(lang) \
@@ -16,11 +15,7 @@ def start_search(lang='ru', count=20, result_type='recent', since='2017-01-01'):
         .set_result_type(result_type) \
         .set_since(since)
 
-    tweets = TweetSearchEngine.get_tweets(criteria)
-    for tweet in tweets:
-        print(tweet)
-    # TODO: Exporter work
-    # exporter = Exporter()
+    TweetSearchEngine.get_tweets(criteria)
 
 
 def setup_logging():
@@ -40,8 +35,10 @@ def setup_logging():
 def main():
     setup_logging()
     logging.info('Grabber started')
-    now = datetime.datetime.now()
-    start_search(since=now.strftime("%Y-%m-%d"))
+    time_now = datetime.datetime.now
+    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M"))
+    start_search(since=time_now().strftime("%Y-%m-%d"))
+    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M"))
 
 
 if __name__ == '__main__':

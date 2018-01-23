@@ -6,6 +6,13 @@ class Tweet:
         self.reply_to = None
         self.time = None
 
+    def to_dict(self):
+        return {'id': self.id,
+                'author': self.author,
+                'time': self.time,
+                'reply_to': self.reply_to,
+                'text': self.text}
+
     def __str__(self):
         return \
             "\n[Tweet]\n" \
