@@ -1,24 +1,24 @@
 import logging
-import codecs
+import datetime
 import sys
 import os
-import traceback
 
-from grabber.manager.criteria import SearchCriteria
-from grabber.manager.search_engine import TweetSearchEngine
+from grabber.search.search_engine import TweetSearchEngine
+from grabber.search.criteria import SearchCriteria
 from grabber.exporter.exporter import Exporter
 
 
-def start_search(lang='en', count=100, result_type='popular', since='2017-01-01', until='2017-12-31'):
+def start_search(lang='ru', count=20, result_type='recent', since='2017-01-01'):
     criteria = SearchCriteria()
-    criteria = criteria\
-        .set_lang(lang)\
-        .set_count(count)\
-        .set_result_type(result_type)\
-        .set_since(since)\
-        .set_until(until)
+    criteria = criteria \
+        .set_lang(lang) \
+        .set_count(count) \
+        .set_result_type(result_type) \
+        .set_since(since)
 
-    tweets = TweetSearchEngine.getTweets(criteria)
+    tweets = TweetSearchEngine.get_tweets(criteria)
+    for tweet in tweets:
+        print(tweet)
     # TODO: Exporter work
     # exporter = Exporter()
 
@@ -40,10 +40,8 @@ def setup_logging():
 def main():
     setup_logging()
     logging.info('Grabber started')
-    # try:
-    start_search()
-    # except Exception as ex:
-    #     logging.error(ex)
+    now = datetime.datetime.now()
+    start_search(since=now.strftime("%Y-%m-%d"))
 
 
 if __name__ == '__main__':
