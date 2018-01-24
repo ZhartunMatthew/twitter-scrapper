@@ -7,7 +7,7 @@ from grabber.search.search_engine import TweetSearchEngine
 from grabber.search.criteria import SearchCriteria
 
 
-def start_search(lang='ru', count=5000, result_type='recent', since='2017-01-01'):
+def start_search(lang='ru', count=50, result_type='recent', since='2017-01-01'):
     criteria = SearchCriteria()
     criteria = criteria \
         .set_lang(lang) \

@@ -15,6 +15,6 @@ def create_dialog_dump(dialogs):
         for i, dialog in enumerate(dialogs):
             dump.write('[')
             for j, tweet in enumerate(dialog):
-                dump.write(str(tweet.to_dict() + '\n'))
+                dump.write(str(tweet.to_dict()) + '\n')
             dump.write(']\n')
         dump.write(']')
