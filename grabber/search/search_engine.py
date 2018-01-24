@@ -11,15 +11,13 @@ from .config.config import Config
 
 class TweetSearchEngine:
 
-    @staticmethod
-    def get_tweets(criteria):
+    def get_tweets(self, criteria, backup_each=100):
         results = []
         unique_ids = set()
 
         active = True
         while active:
-            time.sleep(5)
-            json_response = TweetSearchEngine.get_tweets_set(criteria)
+            json_response = self.get_tweets_set(criteria)
 
             if json_response.get('errors') is not None:
                 error = json_response.get('errors')[0]
@@ -35,37 +33,23 @@ class TweetSearchEngine:
 
             for tweet_item in tweets:
                 if tweet_util.is_reply(tweet_item):
-                    tweet = Tweet()
-                    tweet.id = tweet_item['id_str']
-                    tweet.author = tweet_item['user']['id_str']
-                    tweet.text = tweet_item['text']
-                    tweet.reply_to = \
-                        'https://twitter.com/' + \
-                        tweet_item['in_reply_to_screen_name'] + "/status/" + \
-                        tweet_item['in_reply_to_status_id_str']
+                    tweet, unique_ids = self.__process_tweet(tweet_item, unique_ids)
+                    results.append(tweet)
 
-                    tweet.time = tweet_item['created_at']
-                    if tweet.id not in unique_ids:
-                        unique_ids.add(tweet.id)
-                        results.append(tweet)
+                if len(results) > 0 and len(results) % backup_each == 0:
+                    exporter.create_dump(results)
 
                 if criteria.count <= len(results):
                     break
-
-                if len(results) > 0 and len(results) % 500 == 0:
-                    exporter.create_dump(results)
 
             if criteria.count <= len(results):
                 break
 
         return results
 
-    @staticmethod
-    def get_tweets_set(criteria):
-        # prefix = 'https://twitter.com/i/search/timeline?'
-        # payload = "lang=ru&l=[lang]&q=since:[since-date] until:[until-date]&max_position=[max-position]"
+    def get_tweets_set(self, criteria):
         prefix = 'https://api.twitter.com/1.1/search/tweets.json?'
-        payload = "lang=ru&l=[lang]&q=since:[since-date]&result_type=[result-type]"
+        payload = "count=100&lang=ru&l=[lang]&q=since:[since-date]&result_type=[result-type]"
 
         payload = payload.replace('[lang]', criteria.lang)
         payload = payload.replace('[since-date]', criteria.since)
@@ -76,13 +60,75 @@ class TweetSearchEngine:
         url = prefix + payload
         logging.info('Sending request to: %s' % url)
 
-        resp = TweetSearchEngine.__oauth_request(url).decode()
+        resp = self.__oauth_request(url).decode()
         return json.loads(resp)
 
+    def get_dialogs(self, tweets, backup_each=100):
+        prefix = 'https://api.twitter.com/1.1/statuses/show.json?id='
+        dialogs = []
+        for i, tweet in enumerate(tweets):
+            dialog = [tweet]
+            temp_tweet = tweet
+            logging.info('Dialog: %5d / %5d' % (i, len(tweets)))
+            while True:
+                temp_tweet, _ = self.__get_reply(prefix + temp_tweet.reply_to_tweet)
+                if temp_tweet is None:
+                    break
+
+                dialog.append(temp_tweet)
+
+                if temp_tweet.reply_to_tweet is None:
+                    break
+
+            if len(dialog) > 1:
+                dialogs.append(dialog[::-1])
+
+            if len(dialogs) > 0 and len(dialogs) % backup_each == 0:
+                exporter.create_dialog_dump(dialogs)
+
+        return dialogs
+
     @staticmethod
-    def __oauth_request(url):
+    def __oauth_request(url, delay=5):
+        time.sleep(delay)
         consumer = oauth2.Consumer(key=Config.CONSUMER_KEY, secret=Config.CONSUMER_SECRET)
         token = oauth2.Token(key=Config.TOKEN, secret=Config.TOKEN_SECRET)
         client = oauth2.Client(consumer, token)
         resp, content = client.request(url)
         return content
+
+    @staticmethod
+    def __process_tweet(tweet_item, unique_ids=None):
+
+        tweet_id = tweet_item.get('id_str', None)
+        if tweet_id is None:
+            return None, None
+
+        if unique_ids is not None:
+            if tweet_id not in unique_ids:
+                unique_ids.add(tweet_id)
+            else:
+                return None, None
+
+        tweet = Tweet()
+        tweet.id = tweet_item['id_str']
+        tweet.user_id = tweet_item['user']['id_str']
+        tweet.user_name = tweet_item['user']['screen_name']
+        tweet.text = tweet_item['text']
+        tweet.time = tweet_item['created_at']
+        if tweet_item['truncated']:
+            tweet.is_truncated = True
+            tweet.link = tweet.text[tweet.text.rfind('https'):]
+
+        if tweet_item['in_reply_to_status_id_str'] is not None:
+            tweet.reply_to_tweet = tweet_item['in_reply_to_status_id_str']
+            tweet.reply_to_user = tweet_item['in_reply_to_screen_name']
+            tweet.reply_to_link = \
+                'https://twitter.com/' + tweet.reply_to_user + \
+                "/status/" + tweet_item['in_reply_to_status_id_str']
+
+        return tweet, unique_ids
+
+    def __get_reply(self, url):
+        json_tweet = self.__oauth_request(url, 1)
+        return self.__process_tweet(json.loads(json_tweet.decode()))

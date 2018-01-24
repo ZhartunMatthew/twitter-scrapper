@@ -7,7 +7,7 @@ from grabber.search.search_engine import TweetSearchEngine
 from grabber.search.criteria import SearchCriteria
 
 
-def start_search(lang='ru', count=10000, result_type='recent', since='2017-01-01'):
+def start_search(lang='ru', count=100, result_type='recent', since='2017-01-01'):
     criteria = SearchCriteria()
     criteria = criteria \
         .set_lang(lang) \
@@ -15,7 +15,14 @@ def start_search(lang='ru', count=10000, result_type='recent', since='2017-01-01
         .set_result_type(result_type) \
         .set_since(since)
 
-    TweetSearchEngine.get_tweets(criteria)
+    search_engine = TweetSearchEngine()
+    tweets = search_engine.get_tweets(criteria, backup_each=10)
+    dialogs = search_engine.get_dialogs(tweets, backup_each=10)
+
+    for dialog in dialogs:
+        print('==================')
+        for tweet in dialog:
+            print(tweet)
 
 
 def setup_logging():
