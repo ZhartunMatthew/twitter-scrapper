@@ -49,7 +49,7 @@ class TweetSearchEngine:
 
     def get_tweets_set(self, criteria):
         prefix = 'https://api.twitter.com/1.1/search/tweets.json?'
-        payload = "count=100&lang=ru&l=[lang]&q=since:[since-date]&result_type=[result-type]"
+        payload = "tweet_mode=extended&count=100&lang=ru&l=[lang]&q=since:[since-date]&result_type=[result-type]"
 
         payload = payload.replace('[lang]', criteria.lang)
         payload = payload.replace('[since-date]', criteria.since)
@@ -64,7 +64,7 @@ class TweetSearchEngine:
         return json.loads(resp)
 
     def get_dialogs(self, tweets, backup_each=100):
-        prefix = 'https://api.twitter.com/1.1/statuses/show.json?id='
+        prefix = 'https://api.twitter.com/1.1/statuses/show.json?tweet_mode=extended&id='
         dialogs = []
         for i, tweet in enumerate(tweets):
             dialog = [tweet]
@@ -114,11 +114,8 @@ class TweetSearchEngine:
         tweet.id = tweet_item['id_str']
         tweet.user_id = tweet_item['user']['id_str']
         tweet.user_name = tweet_item['user']['screen_name']
-        tweet.text = tweet_item['text']
+        tweet.text = tweet_item['full_text']
         tweet.time = tweet_item['created_at']
-        if tweet_item['truncated']:
-            tweet.is_truncated = True
-            tweet.link = tweet.text[tweet.text.rfind('https'):]
 
         if tweet_item['in_reply_to_status_id_str'] is not None:
             tweet.reply_to_tweet = tweet_item['in_reply_to_status_id_str']
