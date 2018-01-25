@@ -37,7 +37,7 @@ class TweetSearchEngine:
                     results.append(tweet)
 
                 if len(results) > 0 and len(results) % backup_each == 0:
-                    exporter.create_dump(results)
+                    exporter.create_tweet_dump(results)
 
                 if criteria.count <= len(results):
                     break
@@ -80,10 +80,10 @@ class TweetSearchEngine:
                 if temp_tweet.reply_to_tweet is None:
                     break
 
-            if len(dialog) > 1:
+            if len(dialog) > 3:
                 dialogs.append(dialog[::-1])
 
-            if len(dialogs) > 0 and len(dialogs) % backup_each == 0:
+            if i > 0 and i % backup_each == 0:
                 exporter.create_dialog_dump(dialogs)
 
         return dialogs
