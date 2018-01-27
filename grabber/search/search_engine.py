@@ -37,7 +37,7 @@ class TweetSearchEngine:
                     results.append(tweet)
 
                 if len(results) > 0 and len(results) % backup_each == 0:
-                    exporter.create_dump(results)
+                    exporter.create_tweet_dump(results)
 
                 if criteria.count <= len(results):
                     break
