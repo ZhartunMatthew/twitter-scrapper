@@ -9,6 +9,19 @@ class Tweet:
         self.reply_to_user = None
         self.reply_to_link = None
 
+    @staticmethod
+    def from_dict(tweet_dict):
+        tweet = Tweet()
+        tweet.id = tweet_dict.get('id', None)
+        tweet.user_id = tweet_dict.get('user_id', None)
+        tweet.user_name = tweet_dict.get('user_name', None)
+        tweet.text = tweet_dict.get('text', None)
+        tweet.time = tweet_dict.get('time', None)
+        tweet.reply_to_tweet = tweet_dict.get('reply_to_tweet', None)
+        tweet.reply_to_user = tweet_dict.get('reply_to_user', None)
+        tweet.reply_to_link = tweet_dict.get('reply_to_link', None)
+        return tweet
+
     def to_dict(self):
         return {'id': self.id,
                 'user_id': self.user_id,

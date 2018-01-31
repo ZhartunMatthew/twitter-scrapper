@@ -17,9 +17,8 @@ def start_search(lang='ru', count=10, result_type='recent', since='2017-01-01'):
 
     search_engine = TweetSearchEngine()
     tweets = search_engine.get_tweets(criteria, backup_each=5)
-    # dialogs = search_engine.get_dialogs(tweets, backup_each=1000)
-    from grabber.exporter import exporter
-    exporter.restore_tweet_dump()
+    dialogs = search_engine.get_dialogs(tweets, backup_each=5)
+
 
 def setup_logging():
     root = logging.getLogger()
