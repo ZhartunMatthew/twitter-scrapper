@@ -1,5 +1,8 @@
 import codecs
 import json
+import logging
+
+from datetime import datetime
 
 from grabber.models.tweet import Tweet
 
@@ -12,8 +15,8 @@ def create_tweet_dump(tweets):
         [dump.write(json.dumps(tweet.to_dict(), ensure_ascii=False) + tweet_split) for tweet in tweets]
 
 
-def restore_tweets():
-    with codecs.open('data/tweets/tweets.txt', 'r+', 'utf-8') as dump:
+def restore_tweets(file_path):
+    with codecs.open(file_path, 'r+', 'utf-8') as dump:
         tweets = []
         file_data = dump.read()
         for tweet_string in file_data.split(tweet_split)[:-1]:
@@ -25,14 +28,17 @@ def restore_tweets():
 
 
 def create_dialog_dump(dialogs):
-    with codecs.open('data/dialogs/dialogs.txt', 'w+', 'utf-8') as dump:
+    dump_name = 'dialogs_%s.txt' % datetime.now().strftime("%Y-%m-%d %H+%M+%S")
+    with codecs.open('data/dialogs/' + dump_name, 'w+', 'utf-8') as dump:
         for dialog in dialogs:
             [dump.write(json.dumps(tweet.to_dict(), ensure_ascii=False) + tweet_split) for tweet in dialog]
             dump.write(dialog_split)
 
+    logging.info('Dump created: %s' % dump_name)
 
-def restore_dialogs():
-    with codecs.open('data/dialogs/dialogs.txt', 'r+', 'utf-8') as dump:
+
+def restore_dialogs(file_path):
+    with codecs.open(file_path, 'r+', 'utf-8') as dump:
         dialogs = []
         file_data = dump.read()
         for dialog_string in file_data.split(dialog_split)[:-1]:

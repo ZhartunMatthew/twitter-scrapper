@@ -63,30 +63,32 @@ class TweetSearchEngine:
         resp = self.__oauth_request(url).decode()
         return json.loads(resp)
 
-    def get_dialogs(self, tweets, backup_each=100):
+    def get_dialogs(self, tweets, batch_size):
         prefix = 'https://api.twitter.com/1.1/statuses/show.json?tweet_mode=extended&id='
         dialogs = []
+        result = []
         for i, tweet in enumerate(tweets):
             dialog = [tweet]
             temp_tweet = tweet
-            logging.info('Dialog: %5d / %5d' % (i, len(tweets)))
+            logging.info('Dialog: %5d / %5d Batch size: %5d' % (i, len(tweets), len(dialogs)))
             while True:
                 temp_tweet, _ = self.__get_reply(prefix + temp_tweet.reply_to_tweet)
                 if temp_tweet is None:
                     break
 
                 dialog.append(temp_tweet)
-
                 if temp_tweet.reply_to_tweet is None:
                     break
 
             if len(dialog) > 3:
                 dialogs.append(dialog[::-1])
 
-            if i > 0 and i % backup_each == 0:
+            if len(dialogs) > 0 and len(dialogs) % batch_size == 0:
                 exporter.create_dialog_dump(dialogs)
+                [result.append(d) for d in dialogs]
+                dialogs = []
 
-        return dialogs
+        return result
 
     @staticmethod
     def __oauth_request(url, delay=5):

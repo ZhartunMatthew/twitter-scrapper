@@ -7,7 +7,7 @@ from grabber.search.search_engine import TweetSearchEngine
 from grabber.search.criteria import SearchCriteria
 
 
-def start_search(lang='ru', count=10, result_type='recent', since='2017-01-01'):
+def start_search(lang='ru', count=100, batch_size=10, result_type='recent', since='2017-01-01'):
     criteria = SearchCriteria()
     criteria = criteria \
         .set_lang(lang) \
@@ -16,8 +16,8 @@ def start_search(lang='ru', count=10, result_type='recent', since='2017-01-01'):
         .set_since(since)
 
     search_engine = TweetSearchEngine()
-    tweets = search_engine.get_tweets(criteria, backup_each=5)
-    dialogs = search_engine.get_dialogs(tweets, backup_each=5)
+    tweets = search_engine.get_tweets(criteria, batch_size)
+    dialogs = search_engine.get_dialogs(tweets, batch_size)
 
 
 def setup_logging():
@@ -38,9 +38,9 @@ def main():
     setup_logging()
     logging.info('Grabber started')
     time_now = datetime.datetime.now
-    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M"))
+    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:S"))
     start_search(since=time_now().strftime("%Y-%m-%d"))
-    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M"))
+    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:S"))
 
 
 if __name__ == '__main__':
