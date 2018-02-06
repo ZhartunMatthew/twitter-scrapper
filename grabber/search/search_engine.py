@@ -34,7 +34,8 @@ class TweetSearchEngine:
             for tweet_item in tweets:
                 if tweet_util.is_reply(tweet_item):
                     tweet, unique_ids = self.__process_tweet(tweet_item, unique_ids)
-                    results.append(tweet)
+                    if tweet is not None:
+                        results.append(tweet)
 
                 if len(results) > 0 and len(results) % backup_each == 0:
                     exporter.create_tweet_dump(results)
@@ -88,6 +89,7 @@ class TweetSearchEngine:
                 [result.append(d) for d in dialogs]
                 dialogs = []
 
+        exporter.create_dialog_dump(dialogs)
         return result
 
     @staticmethod

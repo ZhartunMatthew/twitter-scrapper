@@ -39,7 +39,7 @@ def main():
     logging.info('Grabber started')
     time_now = datetime.datetime.now
     logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:S"))
-    start_search(since=time_now().strftime("%Y-%m-%d"))
+    start_search(since=time_now().strftime("%Y-%m-%d"), count=100000, batch_size=1000)
     logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:S"))
 
 
