@@ -44,7 +44,6 @@ def restore_dialogs(file_path):
         for dialog_string in file_data.split(dialog_split)[:-1]:
             dialog = []
             for tweet_string in dialog_string.split(tweet_split)[:-1]:
-                print(tweet_string)
                 tweet_json = json.loads(tweet_string)
                 tweet = Tweet.from_dict(tweet_json)
                 dialog.append(tweet)
