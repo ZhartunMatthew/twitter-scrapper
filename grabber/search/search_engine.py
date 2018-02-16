@@ -65,32 +65,60 @@ class TweetSearchEngine:
         return json.loads(resp)
 
     def get_dialogs(self, tweets, batch_size):
-        prefix = 'https://api.twitter.com/1.1/statuses/show.json?tweet_mode=extended&id='
-        dialogs = []
-        result = []
-        for i, tweet in enumerate(tweets):
-            dialog = [tweet]
-            temp_tweet = tweet
-            logging.info('Dialog: %5d / %5d Batch size: %5d' % (i, len(tweets), len(dialogs)))
-            while True:
-                temp_tweet, _ = self.__get_reply(prefix + temp_tweet.reply_to_tweet)
-                if temp_tweet is None:
+        res_dialogs = []
+        offset = 100
+        tweets_count = len(tweets)
+
+        for i in range(0, int(tweets_count / offset)):
+            logging.info('Fetching dialogs:      %5d / %5d' % (i, int(tweets_count / offset)))
+            tweets_slice = tweets[i * offset:i * offset + offset]
+            dialogs = [[t] for t in tweets_slice]
+            min_amount = 3
+            stop_amount = 5
+
+            while stop_amount > 0:
+                tweets_slice = self.__get_dialogs_batch(tweets_slice)
+                dialogs = self.__match_tweets(dialogs, tweets_slice)
+
+                if len(tweets_slice) <= min_amount:
+                    stop_amount -= 1
+
+            res_dialogs += dialogs
+
+            if len(res_dialogs) >= batch_size:
+                for d in res_dialogs:
+                    d.reverse()
+                exporter.create_dialog_dump(res_dialogs)
+                res_dialogs = []
+
+    @staticmethod
+    def __match_tweets(dialogs, replies):
+        for reply in replies:
+            for dialog in dialogs:
+                if reply.id == dialog[-1].reply_to_tweet:
+                    dialog.append(reply)
                     break
 
-                dialog.append(temp_tweet)
-                if temp_tweet.reply_to_tweet is None:
-                    break
+        return dialogs
 
-            if len(dialog) > 3:
-                dialogs.append(dialog[::-1])
+    def __get_dialogs_batch(self, tweets_slice):
+        prefix = 'https://api.twitter.com/1.1/statuses/lookup.json?tweet_mode=extended&id='
+        for tweet in tweets_slice:
+            if tweet.reply_to_tweet is not None:
+                prefix += tweet.reply_to_tweet + ','
 
-            if len(dialogs) > 0 and len(dialogs) % batch_size == 0:
-                exporter.create_dialog_dump(dialogs)
-                [result.append(d) for d in dialogs]
-                dialogs = []
+        json_resp = self.__oauth_request(prefix[:-1], 3).decode()
+        resp = json.loads(json_resp)
+        tweets = []
+        for json_tweet in resp:
+            try:
+                processed_tweet, _ = self.__process_tweet(json_tweet)
+                tweets.append(processed_tweet)
+            except AttributeError:
+                logging.info(str(json_resp))
+                time.sleep(2)
 
-        exporter.create_dialog_dump(dialogs)
-        return result
+        return tweets
 
     @staticmethod
     def __oauth_request(url, delay=5):
@@ -103,7 +131,6 @@ class TweetSearchEngine:
 
     @staticmethod
     def __process_tweet(tweet_item, unique_ids=None):
-
         tweet_id = tweet_item.get('id_str', None)
         if tweet_id is None:
             return None, None
@@ -130,6 +157,3 @@ class TweetSearchEngine:
 
         return tweet, unique_ids
 
-    def __get_reply(self, url):
-        json_tweet = self.__oauth_request(url, 1)
-        return self.__process_tweet(json.loads(json_tweet.decode()))

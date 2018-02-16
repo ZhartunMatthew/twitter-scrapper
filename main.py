@@ -38,9 +38,9 @@ def main():
     setup_logging()
     logging.info('Grabber started')
     time_now = datetime.datetime.now
-    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:S"))
-    start_search(since=time_now().strftime("%Y-%m-%d"), count=100000, batch_size=1000)
-    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:S"))
+    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:%S"))
+    start_search(since=time_now().strftime("%Y-%m-%d"), count=240000, batch_size=1000)
+    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:%S"))
 
 
 if __name__ == '__main__':
