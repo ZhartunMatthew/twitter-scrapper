@@ -34,14 +34,15 @@ def setup_logging():
     root.addHandler(fh)
 
 
-def main():
-    setup_logging()
-    logging.info('Grabber started')
+def main(index):
+    logging.info('[%2d] Grabber started' % index)
     time_now = datetime.datetime.now
-    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:%S"))
-    start_search(since=time_now().strftime("%Y-%m-%d"), count=240000, batch_size=1000)
-    logging.info('Start time: %s' % time_now().strftime("%Y-%m-%d %H:%M:%S"))
+    logging.info('[%2d] Start time: %s' % (index, time_now().strftime("%Y-%m-%d %H:%M:%S")))
+    start_search(since=time_now().strftime("%Y-%m-%d"), count=60000, batch_size=1000)
+    logging.info('[%2d] Start time: %s' % (index, time_now().strftime("%Y-%m-%d %H:%M:%S")))
 
 
 if __name__ == '__main__':
-    main()
+    setup_logging()
+    for i in range(10):
+        main(i)
